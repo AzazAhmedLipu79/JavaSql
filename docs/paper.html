@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A Minimal SQL-like DBMS over CSV with Paged Storage</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.6;margin:2rem;max-width:920px}
+    h1,h2,h3{margin-top:1.5rem}
+    code,pre{background:#f6f8fa;border-radius:6px}
+    pre{padding:1rem;overflow:auto}
+    .block{border:1px solid #e5e7eb;border-radius:8px;padding:1rem;background:#fff}
+    .small{color:#6b7280}
+  </style>
+</head>
+<body>
+  <h1>A Minimal SQL-like DBMS over CSV with Paged Storage</h1>
+  <div class="small">Author: Project Team &middot; Date: 2025-08-10</div>
+
+  <h2>Abstract</h2>
+  <p>This paper presents a minimal SQL-like DBMS in Java over CSV storage. It supports a practical SQL subset (CREATE/USE/CREATE TABLE, INSERT/UPDATE/DELETE, SELECT with WHERE/ORDER BY, JOIN), a paged storage model with configurable rollover, and a modular architecture. We describe the design, storage, pipeline, implementation, and evaluation, and outline future work.</p>
+
+  <h2>1. Introduction</h2>
+  <p>We deliver a runnable DBMS with a compact SQL subset, paged CSV storage, and clear module boundaries (Parser → AST → AstExecutor → TableEngine). Goals: clarity and demonstrable behavior via tests.</p>
+
+  <h2>2. Related Work</h2>
+  <p>SQLite, DuckDB, and CSV-based tools inform the trade-offs of simplicity vs. robustness.</p>
+
+  <h2>3. System Overview</h2>
+  <p>SQL statements are interpreted over paged CSV tables; a session tracks the current database.</p>
+  <h3>Supported SQL</h3>
+  <ul>
+    <li>CREATE DATABASE, USE, CREATE TABLE, SELECT DATABASE</li>
+    <li>INSERT, UPDATE/DELETE with equality WHERE</li>
+    <li>SELECT with WHERE and ORDER BY</li>
+    <li>JOIN ON equality</li>
+  </ul>
+
+  <h3>Architecture (Block Diagram)</h3>
+  <pre class="block"><code>+------------------+      +-------------+       +----------+      +--------------+
+|  SqlRunner/Main  | ---> |   Lexer     | --->  |   AST    | ---> |  AstExecutor |
++------------------+      +-------------+       +----------+      +--------------+
+                                                                     |    |    |
+                                                                     |    |    |
+                                                                     |    |    +--> TableEngine (CSV paged IO)
+                                                                     |    +------> Session (current DB)
+                                                                     +----------> Executor (DB-level)
+
+TableEngine -> Storage: storage/databases/&lt;db&gt;/&lt;table&gt;/page_0.csv, page_1.csv, ...
+</code></pre>
+
+  <h2>4. Storage Model and Paging</h2>
+  <p>Each table is a directory with page_N.csv files; page size via <code>storage/user_management/config.json</code>.</p>
+  <pre class="block"><code>storage/
+  databases/
+    demo/
+      people/
+        page_0.csv  # header + rows
+        page_1.csv  # next page
+        meta/
+      cities/
+        page_0.csv
+        meta/
+</code></pre>
+
+  <h2>5. Query Processing Pipeline</h2>
+  <ol>
+    <li>Lexing: tokens for keywords, identifiers, numbers, strings, symbols.</li>
+    <li>Parsing: AST for minimal SQL; equality WHERE; JOIN ON equality.</li>
+    <li>Execution: AstExecutor invokes Executor/Session/TableEngine.</li>
+    <li>Storage: TableEngine handles IO, pagination, filtering, sorting, join.</li>
+  </ol>
+  <pre class="block"><code>User SQL -> Lexer -> Parser(AST) -> AstExecutor -> resolve table dir
+  -> TableEngine.insertDir(row, pageSizeKB)
+      -> check last page size; rollover if needed -> write row -> log
+</code></pre>
+
+  <h2>6. Implementation Details</h2>
+  <ul>
+    <li>Lexer: '' string escapes; case-insensitive keywords.</li>
+    <li>Parser: minimal DDL/DML/DQL + JOIN.</li>
+    <li>AST: data-only; executor interprets.</li>
+    <li>TableEngine: list pages, loadDir, insertDir, updateDir, deleteDir, selectDir; nested-loop join.</li>
+    <li>CatalogManager: DB/table creation; page_0.csv header.</li>
+    <li>SqlRunner: semicolon splitting; inline comment stripping.</li>
+    <li>Logger: INFO row counts and operations.</li>
+  </ul>
+
+  <h2>7. Evaluation</h2>
+  <p>Harness, smoke, and end-to-end SQL tests pass consistently via <code>tests/run_all.bat</code>.</p>
+
+  <h2>8. Limitations</h2>
+  <ul>
+    <li>Equality-only WHERE; stringly-typed values.</li>
+    <li>Full scans; nested-loop joins; no indexes.</li>
+    <li>No durability (WAL/atomic writes) or concurrency control.</li>
+  </ul>
+
+  <h2>9. Future Work</h2>
+  <ul>
+    <li>Types, constraints, schema metadata.</li>
+    <li>Expression engine; richer SQL.</li>
+    <li>Indexes and a simple planner; hash join.</li>
+    <li>Durability and compaction; locks/MVCC.</li>
+  </ul>
+
+  <h2>10. Conclusion</h2>
+  <p>A clear, educational DBMS with paged CSV storage and a functional SQL subset; a foundation for further research.</p>
+</body>
+</html>

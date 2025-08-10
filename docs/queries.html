@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Queries & Examples - Java CSV DBMS</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.5;margin:2rem;}
+    h1,h2{margin-top:1.5rem}
+    code,kbd,pre{background:#f6f8fa;padding:.2rem .4rem;border-radius:4px}
+    pre{padding:1rem;overflow:auto}
+    nav a{margin-right:1rem}
+    .note{background:#fff8e1;border:1px solid #ffe58f;padding:.5rem 1rem;border-radius:6px}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+  </nav>
+  <h1>Query reference and examples</h1>
+  <p>This page mirrors <code>docs/queries.md</code> with examples and representative outputs.</p>
+
+  <h2>Setup</h2>
+  <pre><code>CREATE DATABASE demo;
+USE demo;
+CREATE TABLE people (id,name,city_id,age);
+CREATE TABLE cities (id,city);
+</code></pre>
+
+  <h2>INSERT</h2>
+  <pre><code>INSERT INTO people (id,name,city_id,age) VALUES (1,'Alice',10,30);
+INSERT INTO people (id,name,city_id,age) VALUES (2,'Bob',10,25);
+INSERT INTO people (id,name,city_id,age) VALUES (3,'Charlie',20,35);
+INSERT INTO cities (id,city) VALUES (10,'Paris');
+INSERT INTO cities (id,city) VALUES (20,'London');
+</code></pre>
+  <pre>{id=1, name=Alice, city_id=10, age=30}
+{id=2, name=Bob, city_id=10, age=25}
+{id=3, name=Charlie, city_id=20, age=35}</pre>
+
+  <h2>SELECT</h2>
+  <pre><code>SELECT * FROM people;
+</code></pre>
+  <pre>{id=1, name=Alice, city_id=10, age=30}
+{id=2, name=Bob, city_id=10, age=25}
+{id=3, name=Charlie, city_id=20, age=35}</pre>
+
+  <h2>WHERE and ORDER BY</h2>
+  <pre><code>SELECT name,age FROM people ORDER BY age,name;
+</code></pre>
+  <pre>{name=Alice, age=30}
+{name=Bob, age=25}
+{name=Charlie, age=35}</pre>
+
+  <h2>UPDATE / DELETE</h2>
+  <pre><code>UPDATE people SET age=26 WHERE name = 'Bob';
+DELETE FROM people WHERE name = 'Bob';
+</code></pre>
+  <pre>[INFO] Updated 1 rows across 1 pages in .../people
+[INFO] Deleted 1 rows across 1 pages in .../people</pre>
+
+  <h2>JOIN</h2>
+  <pre><code>SELECT * FROM people JOIN cities ON city_id = id;
+</code></pre>
+  <pre>{left.id=1, left.name=Alice, left.city_id=10, left.age=30, right.id=10, right.city=Paris}
+{left.id=3, left.name=Charlie, left.city_id=20, left.age=35, right.id=20, right.city=London}
+</pre>
+
+  <h2>SELECT DATABASE</h2>
+  <pre><code>SELECT DATABASE;
+</code></pre>
+  <pre>Current database: demo</pre>
+
+  <h2>Tips</h2>
+  <ul>
+    <li>Run <code>USE &lt;db&gt;</code> before DML/DQL</li>
+    <li>Configure page size in <code>storage/user_management/config.json</code></li>
+    <li>Use <code>tests/run_all.bat</code> to run harness, smoke, and e2e</li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,6 @@
+SHOW DATABASES;
+CREATE DATABASE show_demo_01;
+USE show_demo_01;
+CREATE TABLE t (id);
+SHOW TABLES;
+SHOW TABLES FROM show_demo_01;

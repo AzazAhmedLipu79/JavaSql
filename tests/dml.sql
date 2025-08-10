@@ -1,0 +1,14 @@
+CREATE DATABASE demo;
+USE demo;
+CREATE TABLE people (id,name,city_id,age);
+CREATE TABLE cities (id,city);
+INSERT INTO people (id,name,city_id,age) VALUES (1,'Alice',10,30);
+INSERT INTO people (id,name,city_id,age) VALUES (2,'Bob',10,25);
+INSERT INTO people (id,name,city_id,age) VALUES (3,'Charlie',20,35);
+INSERT INTO cities (id,city) VALUES (10,'Paris');
+INSERT INTO cities (id,city) VALUES (20,'London');
+SELECT * FROM people WHERE age = 30 ORDER BY name;
+UPDATE people SET age=26 WHERE name = 'Bob';
+DELETE FROM people WHERE name = 'Bob';
+SELECT name,age FROM people ORDER BY age,name;
+SELECT * FROM people JOIN cities ON city_id = id;
